@@ -9,7 +9,7 @@ import time
 import socket
 from dpkt.compat import compat_ord
 
-def send(stub,netstream):
+def send(stub,netstream):   # 调用远程函数
     return stub.sendNetStream(netstream)
 def mac_addr(address):
     """Convert a MAC address to a readable/printable string
@@ -37,55 +37,57 @@ def pack(eth, netstream, head, dict):     # 流打包,返回当前的流数量
 
     ip = eth.data
     transf = ip.data
-    if ip.p == 1 or ip.p == 2:
-        sp = 0
-        dp = 0
+    if ip.p == 1 or ip.p == 2:  # 协议是ICMP和IGMP时没有端口，取为-1
+        sp = -1
+        dp = -1
     else:
         sp = transf.sport
         dp = transf.dport
-
-    seven = mac_addr(eth.src) + mac_addr(eth.dst) + inet_to_str(ip.src) + inet_to_str(ip.src)\
-          + str(ip.tos) + str(ip.p) + str(sp) + str(dp)
+    tos = ip.tos
+    if tos == 0:
+        tos = -1
+    seven = mac_addr(eth.src)+mac_addr(eth.dst) + inet_to_str(ip.src) + inet_to_str(ip.src)\
+          + str(tos) + str(ip.p) + str(sp) + str(dp)
     if(seven in dict):
-        dict.get(seven).Package_count += 1
-        dict.get(seven).Byte_count += ip.len
-        dict.get(seven).End_time = time.time()
+        netstream.body[dict[seven]].Package_count += 1
+        netstream.body[dict[seven]].Byte_count += ip.len
+        netstream.body[dict[seven]].End_time = time.time()
     else:
-        body = Simulator_pb2.NSbody()
+        body = Simulator_pb2.NSbody()              # 新来的7元组
         body.Start_time    = time.time()
         body.End_time      = time.time()
-        body.Package_count = 1
-        body.Byte_count    = ip.len
-        body.Protocol_type = ip.p
+        body.Package_count = 1                     # 一个7元组为一条信息，一个包
+        body.Byte_count    = ip.len                # ip包总长度
+        body.Protocol_type = ip.p                  # 协议号 1=ICMP，2=IGMP，6=TCP，17=UDP
         body.Dst_IP        = inet_to_str(ip.src)
         body.Src_IP        = inet_to_str(ip.src)
         body.Next_IP       = "0.0.0.0"
         body.Dstmask       = "255.255.255.0"
         body.Srcmask       = "255.255.255.0"
-        body.Dst_AS        = 0
-        body.Src_AS        = 0
-        body.Out_interface = mac_addr(eth.src)
+        body.Dst_AS        = 15154                 # 域号
+        body.Src_AS        = 186468
+        body.Out_interface = mac_addr(eth.src)     # MAC地址
         body.In_interface  = mac_addr(eth.dst)
-        body.Dst_port      = dp
+        body.Dst_port      = dp                    # 端口号
         body.Src_port      = sp
-        body.Tos           = ip.tos
-        body.Reserved      = ""
+        body.Tos           = tos
+        body.Reserved      = "N"                   # 保留字段
 
         head.count += 1
-        dict[seven] = body
+        dict[seven] = len(dict)
         netstream.body.append(body)
     return head.count
 def initHead(FLOW_SEQUENCE):
     head = Simulator_pb2.NShead()
-    head.version        = 5
-    head.count          = 0
-    head.SysUptime      = time.time()
+    head.version        = 5                        #
+    head.count          = 1                        # body数，一个流含一个head，多个body
+    head.SysUptime      = time.time()              #
     head.unix_secs      = time.time()
     head.unix_nsecs     = time.time()
-    head.flow_sequence  = FLOW_SEQUENCE
+    head.flow_sequence  = FLOW_SEQUENCE            # 输出的流记录的顺序号 
     head.engine_type    = 1
     head.engine_id      = 1
-    head.reserved       = '0'
+    head.reserved       = "N"
     return head
 def run():
     # NOTE(gRPC Python Team): .close() is possible on a channel and should be
@@ -98,7 +100,7 @@ def run():
 
         f = open('D:\datawireshark\\DATA_MAX_00001_20210628180403.pcap', 'rb')
         pcap = dpkt.pcap.Reader(f)
-        FLOW_SEQUENCE = 0    # 输出的流记录的顺序号
+        FLOW_SEQUENCE = 1    # 输出的流记录的顺序号
         count = 0# 统计IP包的数量
         netstream = Simulator_pb2.NetStream(head = initHead(FLOW_SEQUENCE))
 
@@ -113,8 +115,8 @@ def run():
                 counter = pack(eth, netstream, netstream.head, dict)
                 # 计数，如果遍历1000个包，则打包发送，并且初始化netstream
                 count = count + 1
-
-                if count == 10000 or counter == 30:
+                # time.sleep(0.00001)
+                if count == 1000 or counter == 30:
                     count = 0
                     dict.clear()
                     # netstream['head'] = head

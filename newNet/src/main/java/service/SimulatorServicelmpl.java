@@ -2,6 +2,7 @@ package service;
 
 import grpc.*;
 import io.grpc.stub.StreamObserver;
+import mysql.NetStreamUpdate;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -17,9 +18,14 @@ public class SimulatorServicelmpl extends SimulatorServiceGrpc.SimulatorServiceI
         SimResponse response = SimResponse.newBuilder().setIsArrived(x).build();
         responseObserver.onNext(response);
         responseObserver.onCompleted();
-        int c = 0;
-        get(netstream);
-        System.out.println(data.number);
+        int c = 1;
+        //get(netstream);
+        show_proto(netstream);
+//        for(NSbody b:netstream.getBodyList()){
+//            System.out.println("第"+c+"个"+"DstPort:::"+b.getDstAS());
+//            System.out.println("第"+c+"个"+"SrcPort:::"+b.getNextIP());
+//            c++;
+//        }
     }
     public void get(NetStream netstream){
 
@@ -61,6 +67,55 @@ public class SimulatorServicelmpl extends SimulatorServiceGrpc.SimulatorServiceI
             data.len.clear();
             data.timeStamp.clear();
         }
+        NetStreamUpdate.netStreamInsert(netstream);
         System.out.println("**********************************");
+    }
+    public void show_special_ip(NetStream netstream){
+        List<String> ip = new ArrayList<>(30);
+        List<Integer> size = new ArrayList<>(30);
+        int i = 0;//计数
+        for(NSbody b:netstream.getBodyList()){
+            ip.add(b.getSrcIP());
+            size.add(b.getByteCount());
+        }
+        new IPshow("fourString","ip->size","ip",
+                "size",new Count_String().count(ip,size)).showTable();
+    }
+    public void show_special_mac(NetStream netstream){
+        List<String> mac = new ArrayList<>(30);
+        List<Integer> size = new ArrayList<>(30);
+        int i = 0;//计数
+        for(NSbody b:netstream.getBodyList()){
+            mac.add(b.getInInterface());
+            size.add(b.getByteCount());
+        }
+        new IPshow("sepcial_mac","MAC-SIZE","Mac",
+                "Size",new Count_String().count(mac,size)).showTable();
+    }
+    public void show_proto(NetStream netstream){
+        List<String> proto = new ArrayList<>(30);
+        List<Integer> size = new ArrayList<>(30);
+        int i = 0;//计数
+
+        for(NSbody b:netstream.getBodyList()){
+            int k = b.getProtocolType();
+            switch (k){
+                case 1:
+                    proto.add("ICMP");
+                    break;
+                case 2:
+                    proto.add("IGMP");
+                    break;
+                case 6:
+                    proto.add("TCP");
+                    break;
+                case 17:
+                    proto.add("UDP");
+                    break;
+            }
+            size.add(b.getByteCount());
+        }
+        new IPshow("show_proto","Protocol-Size","Protocol",
+                "Size",new Count_String().count(proto,size)).showTable();
     }
 }

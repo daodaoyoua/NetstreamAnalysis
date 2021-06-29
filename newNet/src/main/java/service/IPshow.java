@@ -78,8 +78,8 @@ public class IPshow<K,V> extends JFrame {
     }
     //显示图表
     public void showTable(){
-        System.out.println("2222222222222222222222222222222222222222222222222222222222222222222222222222");
-        pack();
+        //System.out.println("2222222222222222222222222222222222222222222222222222222222222222222222222222");
+        //pack();
         setVisible(true);
     }
 
