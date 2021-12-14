@@ -7,6 +7,7 @@ import tools.MysqlTool;
 
 
 import java.sql.Connection;
+import java.sql.*;
 import java.sql.PreparedStatement;
 import java.util.List;
 
@@ -18,6 +19,7 @@ public class NetStreamUpdate {
         String updateHead = "INSERT INTO head (version,count,SysUptime,unix_secs,unix_nsecs,flow_sequence," +
                 "engine_type,engine_id,reserved) VALUES (?,?,?,?,?,?,?,?,?)";
         Connection connection = MysqlTool.getConnection();
+        //Connection conn = DriverManager.getConnection();
         String updateBody = "INSERT INTO body (Start_time,End_time,Package_count,Byte_count,Protocol_type," +
                 "Dst_IP,Src_IP,Next_IP,Dstmask,Srcmask,Dst_AS,Src_AS,Out_interface,In_interface," +
                 "Dst_port,Src_port,Tos,Reserved) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
@@ -25,6 +27,7 @@ public class NetStreamUpdate {
         try {
             PreparedStatement st = connection.prepareStatement(updateHead);
             int  i = 1;
+
             for(Object s : head.getAllFields().values().toArray()){
                 st.setString(i++,s.toString());
             }

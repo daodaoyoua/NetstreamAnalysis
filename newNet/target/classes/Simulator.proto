@@ -1,0 +1,44 @@
+syntax = "proto3";
+option java_multiple_files = true;
+package grpc;
+message SimResponse {
+  bool isArrived = 1;
+}
+message NetStream {
+  NShead head = 1;
+  repeated NSbody body = 2;
+}
+message NShead{
+  int32 version       = 1;
+  int32 count         = 2;
+  double SysUptime     = 3;
+  double unix_secs     = 4;
+  double unix_nsecs    = 5;
+  int64 flow_sequence = 6;
+  int32 engine_type   = 7;
+  int32 engine_id     = 8;
+  string reserved     = 9;
+}
+message NSbody{
+  double Start_time    = 1;
+  double End_time      = 2;
+  int32 Package_count = 3;
+  int32 Byte_count    = 4;
+  int32 Protocol_type = 5; //对应号
+  string Dst_IP        = 6;
+  string Src_IP        = 7;
+  string Next_IP       = 8;
+  string Dstmask       = 9;
+  string Srcmask       = 10;
+  int32 Dst_AS        = 11;
+  int32 Src_AS        = 12;
+  string Out_interface = 13;
+  string In_interface  = 14;
+  int32 Dst_port      = 15;
+  int32 Src_port      = 16;
+  int32 Tos           = 17;
+  string Reserved      = 18;
+}
+service SimulatorService {
+  rpc sendNetStream(NetStream) returns (SimResponse);
+}

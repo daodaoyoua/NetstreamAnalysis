@@ -89,7 +89,7 @@ def initHead(FLOW_SEQUENCE):
     head.engine_id      = 1
     head.reserved       = "N"
     return head
-def run():
+def run(fileName):
     # NOTE(gRPC Python Team): .close() is possible on a channel and should be
     # used in circumstances in which the with statement does not fit the needs
     # of the code.
@@ -97,25 +97,21 @@ def run():
 
     with grpc.insecure_channel('localhost:50001') as channel:
         stub = Simulator_pb2_grpc.SimulatorServiceStub(channel)
-
-        f = open('D:\datawireshark\\DATA_MAX_00001_20210628180403.pcap', 'rb')
+        f = open(fileName, 'rb')
         pcap = dpkt.pcap.Reader(f)
         FLOW_SEQUENCE = 1    # 输出的流记录的顺序号
         count = 0# 统计IP包的数量
         netstream = Simulator_pb2.NetStream(head = initHead(FLOW_SEQUENCE))
-
         dict = {}
         c = 1  
         while True:
             for timestamp, buf in pcap:
                 eth = dpkt.ethernet.Ethernet(buf)
                 if not isinstance(eth.data, dpkt.ip.IP):
-                     # print('Non IP Packet type not supported %s\n' % eth.data.__class__.__name__)
                     continue
                 counter = pack(eth, netstream, netstream.head, dict)
-                # 计数，如果遍历1000个包，则打包发送，并且初始化netstream
+                # 计数，如果遍历1000个包信息，则打包发送，并且初始化netstream
                 count = count + 1
-                # time.sleep(0.00001)
                 if count == 1000 or counter == 30:
                     count = 0
                     dict.clear()
@@ -124,13 +120,7 @@ def run():
                     send(stub, netstream)  # 发送netstream
                     if c==10000:
                         break;
-                    # print(netstream.head.flow_sequence)
-                    # print()
-                    print("打包成功",c)
-                    print(datetime.datetime.fromtimestamp(netstream.head.unix_secs))
                     c+=1
                     netstream = Simulator_pb2.NetStream(head = initHead(FLOW_SEQUENCE)) # 初始化netstream
             break;
-if __name__ == '__main__':
-    run()
 

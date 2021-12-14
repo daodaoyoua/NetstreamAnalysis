@@ -18,22 +18,12 @@ public class SimulatorServicelmpl extends SimulatorServiceGrpc.SimulatorServiceI
         SimResponse response = SimResponse.newBuilder().setIsArrived(x).build();
         responseObserver.onNext(response);
         responseObserver.onCompleted();
-        int c = 1;
         //get(netstream);
-        show_proto(netstream);
-//        for(NSbody b:netstream.getBodyList()){
-//            System.out.println("第"+c+"个"+"DstPort:::"+b.getDstAS());
-//            System.out.println("第"+c+"个"+"SrcPort:::"+b.getNextIP());
-//            c++;
-//        }
+        //show_proto(netstream);
     }
     public void get(NetStream netstream){
-
         long timestamp = (long)(netstream.getHead().getUnixSecs()*1000);
         SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
-        //SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:SSS");
-        //String sd = sdf.format(new Date(timestamp));
-        //System.out.println(sd);
 
         List<String> ipList = new ArrayList<String>(30);
         List<Integer> ipSize = new ArrayList<Integer>(30);
@@ -68,6 +58,7 @@ public class SimulatorServicelmpl extends SimulatorServiceGrpc.SimulatorServiceI
             data.timeStamp.clear();
         }
         NetStreamUpdate.netStreamInsert(netstream);
+
         System.out.println("**********************************");
     }
     public void show_special_ip(NetStream netstream){
